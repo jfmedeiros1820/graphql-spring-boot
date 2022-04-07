@@ -8,9 +8,14 @@ import io.leangen.graphql.annotations.GraphQLArgument;
 import io.leangen.graphql.annotations.GraphQLContext;
 import io.leangen.graphql.annotations.GraphQLQuery;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
+@Slf4j
 @Service
 @AllArgsConstructor
 public class EmployeeService {
@@ -52,5 +57,22 @@ public class EmployeeService {
 
     private Specification<Employee> byPosition(FilterField filterField) {
         return (root, query, builder) -> filterField.generateCriteria(builder, root.get("position"));
+    }
+
+    @Transactional
+    public boolean updateEmployee() {
+        int age = 10;
+        List<Employee> employees = employeeRepository.findTop50ByAgeGreaterThan(age+1);
+        if (employees.isEmpty()) {
+            return false;
+        }
+
+        employees.forEach(employee -> {
+            employee.setAge(age);
+            employeeRepository.save(employee);
+
+            log.info("Updating employee '{}' with age '{}'", employee.getFirstName(), employee.getAge());
+        });
+        return true;
     }
 }
